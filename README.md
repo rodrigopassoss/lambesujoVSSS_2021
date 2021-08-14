@@ -21,7 +21,7 @@ Após instalar corretamente os pré-requisitos, basta clonar este repositório n
 ```
 cd diretorio/de/instalacao
 git init
-git remote add origin https://github.com/rodrigopassoss/lambesujoVSSS_2021
+git remote add origin https://github.com/rodrigopassoss/lambesujoVSSS_2021.git
 git fetch
 git checkout -t origin/master -f
 ```

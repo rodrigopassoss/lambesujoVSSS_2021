@@ -23,7 +23,7 @@ cd diretorio/de/instalacao
 git init
 git remote add origin https://github.com/rodrigopassoss/lambesujoVSSS_2021.git
 git fetch
-git checkout -t origin/master -f
+git checkout -t origin/main -f
 ```
 Após clonar os arquivos corretamente, eles já serão adicionados à sua versão do simulador. Neste momento você deve criar um branch com seu nome
 

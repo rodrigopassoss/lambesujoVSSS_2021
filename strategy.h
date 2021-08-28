@@ -163,8 +163,7 @@ class Strategy {
     double distancia(double,double,double,double);
     double limita_velocidade(double, double);
 
-
- //------------------ Edições 2021 ----------------------//
+//------------------ Edições 2021 ------------------------------------------------------------------------------------------------//
  //Métodos
    //----------- Path Planning ------------------
     vector<pair<double,double>> gerar_caminho(int qtd_pontos);
@@ -206,6 +205,10 @@ class Strategy {
     void send_data_ball(double x, double y,  QString name="ball_data.txt");
     void send_data_path(vector<pair<double,double>> pontos, QString name="path_data.txt" );
     void send_data_control(double setPoint, double varControl, QString name="control_data.txt" );
+
+  //Variáveis para medição de tempo
+    clock_t start,end;
+    double tempo;
 
 
 

@@ -1,5 +1,4 @@
 #include "strategy.h"
-#include "GrafoRRT.h"
 
 
 Strategy::Strategy(bool time)
@@ -177,15 +176,15 @@ void Strategy::strategy_blue(fira_message::Robot b0, fira_message::Robot b1,fira
            setup_pure_pursuit(caminho.at(0));
            replain=false;
        }
-   if(tempo > 50)
+   if(tempo > 1)
    {
       //critério teste
       replain=true;
       tempo=0;
    }
 
-   double v_pref = 0.1;
-   pure_pursuit(b1,1,caminho,0.05,v_pref);
+   double v_pref = 0.35;
+   pure_pursuit(b1,1,caminho,0.09,v_pref);
 
 
     cinematica_azul();
@@ -197,7 +196,7 @@ void Strategy::strategy_blue(fira_message::Robot b0, fira_message::Robot b1,fira
     send_data_control(v_pref,sqrt(pow(b1.vx(), 2)+pow(b1.vy(), 2)));
 
     end = clock();
-    tempo+=pow(10,3)*(end-start)/CLOCKS_PER_SEC;//millisegundos
+    tempo+=pow(10,1)*(end-start)/CLOCKS_PER_SEC;//millisegundos
     cout<<"tempo = " << tempo << endl;
 
 }
@@ -697,6 +696,8 @@ vector<pair<double, double>> Strategy::takeBallToGoal(pair<double, double> robot
 void Strategy::pure_pursuit(fira_message::Robot robot, int id_robot,vector<pair<double,double>> points, double lookAhead_dist, double v_pref)
 {
     //Calcular distâncias do robô aos pontos no caminho
+
+    //evitar estouro de vetor
     int treshold = points.size();
     if(pivot_pp > treshold-1)
         pivot_pp=treshold-1;

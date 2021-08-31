@@ -11,7 +11,6 @@
 #include "net/pb/packet.pb.h"
 #include "net/pb/replacement.pb.h"
 #include <time.h>
-#include <GrafoRRT.h>
 
 
 typedef pair<double, double> vetor;

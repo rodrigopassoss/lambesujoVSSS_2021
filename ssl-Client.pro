@@ -1,6 +1,7 @@
 
 
-TARGET = lambesujo
+#TARGET = lambesujo
+TARGET=../ssl-Client/lambesujo
 TEMPLATE = app
 CONFIG += console c++11
 CONFIG -= app_bundle
@@ -8,6 +9,7 @@ CONFIG -= app_bundle
 
 QT += core
 QT += network
+
 QT += gui
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 

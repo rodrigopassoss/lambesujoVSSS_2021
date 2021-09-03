@@ -12,6 +12,10 @@
 #include "net/pb/replacement.pb.h"
 #include <time.h>
 
+
+typedef pair<double, double> vetor;
+
+
 struct ang_err
 {
     double fi;
@@ -54,6 +58,7 @@ public:
         (*this)[5] = rb5;
 
     }
+
 
     //Destructors
     ~Team(){}
@@ -157,21 +162,41 @@ class Strategy {
     double distancia(double,double,double,double);
     double limita_velocidade(double, double);
 
-
-    //------------------ Edições 2021 ----------------------//
-    //Métodos
+//------------------ Edições 2021 ------------------------------------------------------------------------------------------------//
+ //Métodos
+   //----------- Path Planning ------------------
     vector<pair<double,double>> gerar_caminho(int qtd_pontos);
+    vector<pair<double,double>> path_planningRRT(pair<double,double> root,pair<double,double> goal,Team adv, int idxRobo);
+        //-------------- RRT -----------------
+        pair<double,double> gerarPontoAleatotio(pair<double,double> currPos,double raio);
+        int buscaPontoMaisProximo(vector<pair<double,double>> arvore, pair<double,double> q_rand);
+        pair<double,double> gerarNovoPonto(pair<double,double> q_near,pair<double,double> q_rand, double passo);  /*gera o q_new*/
+        bool regraDeExclusao(pair<double,double> q_new /* novo ponto */, Team obs /* outros robôs */, int idx /* indice do robô */);
+        vector<pair<double,double>> gerarCaminho(vector<pair<double,double>> arvore,vector<int> adjList, int idxGoal);
+        //------------------------------------
+    //--------------------------------------------
+
+    //----- Comportamentos
+    vector<pair<double,double>> takeBallToGoal(pair<double,double> robot_pos, pair<double,double> ball);
+
+
+   //------ Path Tracking
     void pure_pursuit(fira_message::Robot robot,int id_robot,vector<pair<double,double>> points, double lookAhead_dist, double v_pref);
     pair<double,double> sweep_path(pair<double,double> goal_p, pair<double,double> ref_p, double v_pref);
     double controleLinear(double err, double Kp, double Ki);
     void setup_pure_pursuit(pair<double,double> p);
-    //O controle angular será o mesmo do VaiPara
+         //Obs.: O controle angular e linear será o mesmo do VaiPara
 
-    //Atributos
+
+
+ //Atributos para o path tracking
     int err_i; //memória para o integrador do controleLinear - 2
     int pivot_pp;
     pair<double,double> carrot_point;
+
+ //Atributos para o path planning
     bool replain; //Flag para o replanejamento
+
 
 
     //exportar dados
@@ -179,6 +204,10 @@ class Strategy {
     void send_data_ball(double x, double y,  QString name="ball_data.txt");
     void send_data_path(vector<pair<double,double>> pontos, QString name="path_data.txt" );
     void send_data_control(double setPoint, double varControl, QString name="control_data.txt" );
+
+  //Variáveis para medição de tempo
+    clock_t start,end;
+    double tempo;
 
 
 

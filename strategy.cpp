@@ -1,5 +1,5 @@
 #include "strategy.h"
-#include "GrafoRRT.h"
+
 
 Strategy::Strategy(bool time)
 {
@@ -53,6 +53,8 @@ Strategy::Strategy(bool time)
     }
 
     replain = true;
+    tempo = 0;
+
 }
 
 //Está fazendo muito pouca diferença, talvez deva diminuir o tempo
@@ -113,8 +115,7 @@ void Strategy::strategy_blue(fira_message::Robot b0, fira_message::Robot b1,fira
                              fira_message::Robot y0, fira_message::Robot y1,fira_message::Robot y2,
                              fira_message::Ball ball, const fira_message::Field & field,string sit_juiz)
 {
-   Team blue(b0,b1,b2);
-   Team yellow(y0,y1,y2);
+   Team robots(b0,b1,b2,y0,y1,y2);
   /* double dist1, dist2;
     cout << endl;
    if (ball.x()<0.65)
@@ -166,27 +167,37 @@ void Strategy::strategy_blue(fira_message::Robot b0, fira_message::Robot b1,fira
         }*/
 
     //caminho.push_back(make_pair(ball.x(),ball.y()));
-
-
+   start=clock();
    if(replain)
        {
-           caminho=gerar_caminho(100);
+           //caminho=takeBallToGoal(make_pair(b1.x(),b1.y()),make_pair(ball.x(),ball.y()));
+           //caminho=gerar_caminho(100);
+           caminho=path_planningRRT(make_pair(b1.x(),b1.y()),make_pair(ball.x(),ball.y()),robots,1);
            setup_pure_pursuit(caminho.at(0));
            replain=false;
        }
+   if(tempo > 1)
+   {
+      //critério teste
+      replain=true;
+      tempo=0;
+   }
 
-   double v_pref = 0.8;
-   pure_pursuit(b1,1,caminho,0.05,v_pref);
+   double v_pref = 0.35;
+   pure_pursuit(b1,1,caminho,0.09,v_pref);
 
 
     cinematica_azul();
 
     //export data
-    send_data_robots(blue);
+    send_data_robots(robots);
     send_data_ball(carrot_point.first,carrot_point.second);
     send_data_path(caminho);
     send_data_control(v_pref,sqrt(pow(b1.vx(), 2)+pow(b1.vy(), 2)));
 
+    end = clock();
+    tempo+=pow(10,1)*(end-start)/CLOCKS_PER_SEC;//millisegundos
+    cout<<"tempo = " << tempo << endl;
 
 }
 
@@ -502,8 +513,8 @@ vector<pair<double, double>> Strategy::gerar_caminho(int qtd_pontos)
             double t = M_PI - 2*M_PI*((qtd_pontos-1)-i)/(qtd_pontos-1);
             //double x = 0.25*(1 + cos(t))*cos(t);
             //double y = 0.25*(1 + cos(t))*sin(t);
-            double x = raio*cos(10*t);
-            double y = raio*sin(10*t);
+            double x = raio*cos(5*t);
+            double y = raio*sin(5*t);
             waypints.push_back(make_pair(x,y));
            /* waypints.push_back(make_pair(-lado,-lado));
             waypints.push_back(make_pair(lado,-lado));
@@ -516,13 +527,184 @@ vector<pair<double, double>> Strategy::gerar_caminho(int qtd_pontos)
 
 }
 
+vector<pair<double, double>> Strategy::path_planningRRT(pair<double, double> root, pair<double, double> goal, Team obs, int idx_Robo)
+{
+
+    vector<vetor> rrt;  //arvore da rrt;
+    vector<int> adjList; //lista de adjacências
+    adjList.push_back(-1);
+    rrt.push_back(root);
+
+    int currIdx=0; //indice atual
+    int idxProxGoal=0; //indice mais proximo do objetivo
+    double distMin=INFINITY;
+
+    for(int i=0;i<100;i++)
+    {
+         vetor q_rand = gerarPontoAleatotio(root,0.65);
+         cout<<q_rand.first<<", "<< q_rand.second<<endl;
+
+
+         int id_qNear = buscaPontoMaisProximo(rrt,q_rand);
+
+         vetor q_near = rrt.at(id_qNear);
+         cout<<q_near.first<<", "<< q_near.second<<endl;
+
+         vetor q_new = gerarNovoPonto(q_near,q_rand,0.05);
+         cout<<q_new.first<<", "<< q_new.second<<endl;
+
+         if(regraDeExclusao(q_new,obs,idx_Robo))
+             {
+                 rrt.push_back(q_new);
+                 adjList.push_back(id_qNear);
+                 currIdx++;
+                 //Escpaço para definir indixe do ponto mais proximo do objetivo
+                 double distToGoal=distancia(rrt.at(currIdx).first,rrt.at(currIdx).second, goal.first,goal.second);
+                 if(distToGoal<distMin)
+                     {
+                         distMin=distToGoal;
+                         idxProxGoal=currIdx;
+                     }
+             }
+
+
+    }
+
+    vector<vetor> path = gerarCaminho(rrt,adjList,idxProxGoal);
+    cout << "sizePath: "<< path.size()<<endl;
+
+    return path;
+
+
+}
+
+pair<double, double> Strategy::gerarPontoAleatotio(pair<double, double> currPos, double raio)
+{
+    //double r = (rand()/RAND_MAX)*raio;
+    //double theta = (rand()/RAND_MAX)*M_PI - (M_PI/2);
+
+    double r= (static_cast <double> (rand())/(static_cast <double> (RAND_MAX/2*raio))) - raio;
+    double theta= (static_cast <double> (rand())/(static_cast <double> (RAND_MAX/M_PI))) - M_PI/2;
+
+    pair<double, double> q_rand;
+    double x=currPos.first + r*cos(theta);
+    double y=currPos.second + r*sin(theta);
+    if((abs(x)>0.75))
+        x=(0.75*x)/abs(x);
+
+    if((abs(y)>0.65))
+        y=(0.65*y)/abs(y);
+
+    q_rand = make_pair(x,y);
+
+    return q_rand;
+
+}
+
+int Strategy::buscaPontoMaisProximo(vector<pair<double, double>> arvore, pair<double, double> q_rand)
+{
+    int qtd_pontos_rrt = arvore.size();
+    double min_dist=INFINITY;
+    int idMaisProximo=0;
+    for(int i=0;i<qtd_pontos_rrt;i++)
+        {
+            double dist = distancia(arvore.at(i).first,arvore.at(i).second,q_rand.first,q_rand.second);
+
+            if(dist<min_dist)
+                {
+                    min_dist=dist;
+                    idMaisProximo=i;
+                }
+
+        }
+    return idMaisProximo;
+
+}
+
+pair<double, double> Strategy::gerarNovoPonto(pair<double, double> q_near, pair<double, double> q_rand, double passo)
+{
+    double norm = distancia(q_rand.first,q_rand.second,q_near.first,q_near.second);
+    double qnew_x = q_near.first + passo*(q_rand.first - q_near.first)/norm;
+    double qnew_y = q_near.second + passo*(q_rand.second - q_near.second)/norm;
+
+    return make_pair(qnew_x,qnew_y);
+
+}
+
+bool Strategy::regraDeExclusao(pair<double, double> q_new, Team obs, int idx)
+{
+    double raioRobo = 0.05;
+    int numObs = obs.size();
+    bool resultado=true;
+
+    for(int i=0;i<numObs;i++)
+        {
+            if(i!=idx)
+            {
+                double dist=distancia(q_new.first,q_new.second,obs.at(i).x(),obs.at(i).y());
+                if(dist<(2*raioRobo))
+                    {
+                        resultado=false;
+                        break;
+                    }
+            }
+        }
+    return resultado;
+}
+
+vector<pair<double, double> > Strategy::gerarCaminho(vector<pair<double, double>> arvore, vector<int> adjList, int idxGoal)
+{
+    int pivo=idxGoal;
+    vector<pair<double, double>> path;
+    path.clear();
+    while(pivo>0)
+    {
+        path.push_back(make_pair(arvore.at(pivo).first,arvore.at(pivo).second));
+        pivo = adjList.at(pivo);
+    }
+    vector<pair<double, double>> rpath;
+    for(int i=path.size()-1;i>=0;i--)
+        {
+            rpath.push_back(path.at(i));
+        }
+
+    return rpath;
+}
+
+vector<pair<double, double>> Strategy::takeBallToGoal(pair<double, double> robot_pos, pair<double, double> ball)
+{
+    double dist=sqrt(pow(ball.first-robot_pos.first,2)+pow(ball.second-robot_pos.second,2));
+
+    double raio=0.1;
+    if(dist>0.1)
+        raio=dist;
+
+
+    double th = atan2(ball.second,ball.first-0.72);
+    pair<double, double> goal_p = make_pair(ball.first+raio*cos(th),ball.second+raio*sin(th));
+
+    vector<pair<double, double>> path;
+    path.push_back(goal_p);
+    path.push_back(ball);
+    path.push_back(make_pair(0.72,0));
+
+    return path;
+
+}
+
+
 void Strategy::pure_pursuit(fira_message::Robot robot, int id_robot,vector<pair<double,double>> points, double lookAhead_dist, double v_pref)
 {
     //Calcular distâncias do robô aos pontos no caminho
 
+    //evitar estouro de vetor
+    int treshold = points.size();
+    if(pivot_pp > treshold-1)
+        pivot_pp=treshold-1;
+
     ang_err angulo = olhar(robot, carrot_point.first, carrot_point.second);
-    v_pref=v_pref*abs(cos(angulo.fi*M_PI/180));
-    if((abs(angulo.fi) > 45)&&(abs(angulo.fi) < 135))
+   // v_pref=v_pref*abs(cos(angulo.fi*M_PI/180));
+   if((abs(angulo.fi) > 45)&&(abs(angulo.fi) < 135))
         v_pref=0;
 
     double dt = 0.016;
@@ -530,10 +712,10 @@ void Strategy::pure_pursuit(fira_message::Robot robot, int id_robot,vector<pair<
     carrot_point.first = carrot_point.first + v_swp.first*dt;
     carrot_point.second = carrot_point.second + v_swp.second*dt;
 
+
     double dd = sqrt(pow(points.at(pivot_pp).first-carrot_point.first,2)+
                      pow(points.at(pivot_pp).second-carrot_point.second,2));
 
-    int treshold = points.size();
     double d_acc = 0.05;
 
     if( (dd < d_acc)&&(pivot_pp<treshold-1))
@@ -547,7 +729,7 @@ void Strategy::pure_pursuit(fira_message::Robot robot, int id_robot,vector<pair<
     angulo = olhar(robot, carrot_point.first, carrot_point.second);
     VW[id_robot][1] = controleAngular(angulo.fi);
 
-    //send_data_control(v_pref,sqrt(pow(robot.vx(), 2)+pow(robot.vy(), 2)));
+    //send_data_control(sqrt(pow(v_swp.first, 2)+pow(v_swp.second, 2)),sqrt(pow(robot.vx(), 2)+pow(robot.vy(), 2)));
 
 
 }
@@ -557,7 +739,6 @@ pair<double, double> Strategy::sweep_path(pair<double, double> goal_p, pair<doub
     double norm_factor = sqrt(pow(ref_p.first-goal_p.first,2) + pow(ref_p.second-goal_p.second,2));
     double x_p = v_pref*((ref_p.first-goal_p.first)/norm_factor);
     double y_p = v_pref*((ref_p.second-goal_p.second)/norm_factor);
-
     return make_pair(x_p,y_p);
 }
 
@@ -1687,5 +1868,5 @@ void Strategy::FIRE_KICK(fira_message::Robot rb,fira_message::Ball ball, int id)
 vector<pair<double, double> > Strategy::getWayPoints()
 {
     return caminho;
-    //teste2
+    //teste 3
 }

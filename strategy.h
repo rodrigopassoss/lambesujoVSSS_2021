@@ -166,13 +166,16 @@ class Strategy {
  //Métodos
    //----------- Path Planning ------------------
     vector<pair<double,double>> gerar_caminho(int qtd_pontos);
-    vector<pair<double,double>> path_planningRRT(pair<double,double> root,pair<double,double> goal,Team adv, int idxRobo);
+    vector<pair<double,double>> path_planningRRT(pair<double,double> root,pair<double,double> goal,Team adv, int idxRobo, int numInt, double SearchRaio);
         //-------------- RRT -----------------
         pair<double,double> gerarPontoAleatotio(pair<double,double> currPos,double raio);
+        pair<double,double> gerarPontoAleatotio(pair<double,double> currPos,pair<double,double> goal,double prob,double raio);     //Sobrecarga
         int buscaPontoMaisProximo(vector<pair<double,double>> arvore, pair<double,double> q_rand);
         pair<double,double> gerarNovoPonto(pair<double,double> q_near,pair<double,double> q_rand, double passo);  /*gera o q_new*/
         bool regraDeExclusao(pair<double,double> q_new /* novo ponto */, Team obs /* outros robôs */, int idx /* indice do robô */);
         vector<pair<double,double>> gerarCaminho(vector<pair<double,double>> arvore,vector<int> adjList, int idxGoal);
+        bool straitlineTest(pair<double,double> currPos/* novo ponto */, pair<double,double> target, Team obs /* outros robôs */, int idx /* indice do robô */);
+
         //------------------------------------
     //--------------------------------------------
 
@@ -193,10 +196,11 @@ class Strategy {
     int err_i; //memória para o integrador do controleLinear - 2
     int pivot_pp;
     pair<double,double> carrot_point;
+    double Mdist;  //Distância percorrida pelo robô
 
  //Atributos para o path planning
     bool replain; //Flag para o replanejamento
-
+    bool plain;
 
 
     //exportar dados

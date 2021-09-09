@@ -1,6 +1,6 @@
 
 
-TARGET = lambesujo
+TARGET = /home/david/Documentos/fira-client-master/ssl-Client/lambesujo
 TEMPLATE = app
 CONFIG += console c++11
 CONFIG -= app_bundle

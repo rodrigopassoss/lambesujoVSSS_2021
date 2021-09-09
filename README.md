@@ -23,7 +23,7 @@ cd diretorio/de/instalacao
 git init
 git remote add origin https://github.com/rodrigopassoss/lambesujoVSSS_2021.git
 git fetch
-git checkout -t origin/master -f
+git checkout -t origin/main -f
 ```
 Após clonar os arquivos corretamente, eles já serão adicionados à sua versão do simulador. Neste momento você deve criar um branch com seu nome
 
@@ -70,6 +70,8 @@ git push
 ```
 
 Isso fará com que qualquer pessoa possa facilmente testar seu código no computador deles, além de que todo o progresso fica guardado. Note que apenas esses três arquivos serão modificados e atualizados, pois basta modificarmos eles para fazer qualquer programa funcional. Caso alguma modificação em outro arquivo seja necessária, entre em contato comigo e poderemos resolver isso.
+
+Ao usar o **git push** podirá o usuário a senha, para o usuário pode colocar o seu usário do gitHub. Já para senha coloque o "token" de acesso pessoal. (instruções sobre o token pessoal: https://docs.github.com/pt/github/authenticating-to-github/keeping-your-account-and-data-secure/creating-a-personal-access-token)
 
 ## Pegando apenas um arquivo do código oficial (ou outro branch)
 

@@ -176,10 +176,11 @@ void Strategy::strategy_blue(fira_message::Robot b0, fira_message::Robot b1,fira
 
    //Look-Ahead distance
    double l_ahead=0.08;
-   double raio_rrt=0.35;
+   double raio_rrt=0.7;
+   double a = 0.8; //frequência de corte
    pair<double,double> goalP=make_pair(ball.x(),ball.y());
    pair<double,double> currPos=make_pair(b1.x(),b1.y());
-
+   vector<vetor> caminho_aux;
    if(replain)
        {
             start=clock();
@@ -191,7 +192,8 @@ void Strategy::strategy_blue(fira_message::Robot b0, fira_message::Robot b1,fira
                    if(plain && (Curr_velR1>0.01))
                       currPos=carrot_point;
 
-                   caminho=path_planningRRT(currPos,goalP,robots,1,500,raio_rrt);
+                   caminho= path_planningRRT(currPos,goalP,robots,1,100,raio_rrt);
+                   filtro_caminho(a);
                    setup_pure_pursuit(caminho.at(0));
 
                 }
@@ -210,7 +212,7 @@ void Strategy::strategy_blue(fira_message::Robot b0, fira_message::Robot b1,fira
    if(Curr_velR1<0.01)
        replain=true;
 
-   double v_pref = 0.35;
+   double v_pref = 0.5;
 
    pure_pursuit(b1,1,caminho,l_ahead,v_pref);
 
@@ -1977,4 +1979,23 @@ vector<pair<double, double> > Strategy::getWayPoints()
 {
     return caminho;
     //teste 2
+}
+
+void Strategy::filtro_caminho(double frequencia)
+{
+  vector<vetor>caminho_filtrado;
+  caminho_filtrado.clear();
+  caminho_filtrado.push_back(caminho.at(0));
+  double a = frequencia; //mantenha: 0 < frequência < 1
+  double px;
+  double py;
+  vetor p;
+  for (int i = 1; i< (int) caminho.size(); i++ ){
+    px = (1 - a)*caminho_filtrado.at(i-1).first + a*caminho.at(i).first;
+    py = (1 - a)*caminho_filtrado.at(i-1).second + a*caminho.at(i).second;
+    p = make_pair(px,py);
+    caminho_filtrado.push_back(p);
+  }
+  caminho_filtrado.push_back(*caminho.end());
+  caminho = caminho_filtrado;
 }

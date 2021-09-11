@@ -175,7 +175,7 @@ class Strategy {
         bool regraDeExclusao(pair<double,double> q_new /* novo ponto */, Team obs /* outros robôs */, int idx /* indice do robô */);
         vector<pair<double,double>> gerarCaminho(vector<pair<double,double>> arvore,vector<int> adjList, int idxGoal);
         bool straitlineTest(pair<double,double> currPos/* novo ponto */, pair<double,double> target, Team obs /* outros robôs */, int idx /* indice do robô */);
-
+        void filtro_caminho(double frequencia);
         //------------------------------------
     //--------------------------------------------
 

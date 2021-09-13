@@ -1868,5 +1868,5 @@ void Strategy::FIRE_KICK(fira_message::Robot rb,fira_message::Ball ball, int id)
 vector<pair<double, double> > Strategy::getWayPoints()
 {
     return caminho;
-    //teste 3
+    //teste3
 }

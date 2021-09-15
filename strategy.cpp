@@ -178,7 +178,8 @@ void Strategy::strategy_blue(fira_message::Robot b0, fira_message::Robot b1,fira
    double l_ahead=0.08;
    double raio_rrt=0.7;
    double a = 0.8; //frequência de corte
-   pair<double,double> goalP=make_pair(ball.x(),ball.y());
+   //pair<double,double> goalP=make_pair(ball.x(),ball.y());
+   pair<double,double> goalP=make_pair(predictedBall.x,predictedBall.y);  // Teste predictedBall
    pair<double,double> currPos=make_pair(b1.x(),b1.y());
    vector<vetor> caminho_aux;
    if(replain)
@@ -602,7 +603,7 @@ vector<pair<double, double>> Strategy::path_planningRRT(pair<double, double> roo
                          idxProxGoal=currIdx;
                      }
 
-                 if(distToGoal<0.05)
+                 if(distToGoal<0.05) // Conclui caso um galho fique a um passo do destino
                      break;
 
              }
@@ -828,7 +829,8 @@ void Strategy::pure_pursuit(fira_message::Robot robot, int id_robot,vector<pair<
 
     if( (dd < d_acc)&&(pivot_pp<treshold-1))
         pivot_pp=pivot_pp+1;
-    else if(pivot_pp>=treshold-1)
+    else if( sqrt(pow(robot.x()-points.back().first,2)+pow(robot.y()-points.back().second,2) )<=lookAhead_dist)
+    //else if(pivot_pp>=treshold-1)
         replain=true;     // habilita replanejamento
 
    /* double err = sqrt(pow(robot.x()-carrot_point.first,2)+

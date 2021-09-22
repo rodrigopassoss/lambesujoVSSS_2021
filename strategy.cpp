@@ -72,7 +72,7 @@ void Strategy::predict_ball(fira_message::Ball ball)
     float theta = 0; //Guarda o termo do preditor
     float temp = 0;
 
-    int futureTime = 50; //Representa quantas iterações no futuro o robô vai predizer a bola
+    int futureTime = 25; // 50 Representa quantas iterações no futuro o robô vai predizer a bola
     //Atenção: quanto mais no futuro, mais errado, então imagine esse valor como um ganho de preditor
     //tal que MAIOR = mais pra frente, MENOR = menos pra frente no tempo.
 
@@ -178,8 +178,8 @@ void Strategy::strategy_blue(fira_message::Robot b0, fira_message::Robot b1,fira
    double l_ahead=0.08;
    double raio_rrt=0.7;
    double a = 0.8; //frequência de corte
-   //pair<double,double> goalP=make_pair(ball.x(),ball.y());
-   pair<double,double> goalP=make_pair(predictedBall.x,predictedBall.y);  // Teste predictedBall
+   pair<double,double> goalP=make_pair(ball.x(),ball.y());
+   //pair<double,double> goalP=make_pair(predictedBall.x,predictedBall.y);  // Teste predictedBall
    pair<double,double> currPos=make_pair(b1.x(),b1.y());
    vector<vetor> caminho_aux;
    if(replain)
@@ -193,7 +193,13 @@ void Strategy::strategy_blue(fira_message::Robot b0, fira_message::Robot b1,fira
                    if(plain && (Curr_velR1>0.01))
                       currPos=carrot_point;
 
-                   caminho= path_planningRRT(currPos,goalP,robots,1,100,raio_rrt);
+                   //if(distancia(currPos.first,currPos.second,ball.x(),ball.y())<raio_rrt){
+                       //caminho= path_planningRRT(currPos,goalP,robots,1,100,distancia(currPos.first,currPos.second,ball.x(),ball.y()));
+                       //cout << "Planejamento dentro do círculo "<<endl;
+                   //}
+                   //else{
+                       caminho= path_planningRRT(currPos,goalP,robots,1,100,raio_rrt);
+                   //}
                    filtro_caminho(a);
                    setup_pure_pursuit(caminho.at(0));
 
@@ -210,12 +216,13 @@ void Strategy::strategy_blue(fira_message::Robot b0, fira_message::Robot b1,fira
        }
 
    //cout << "sizePath: "<<caminho.size()<<endl;
+
    if(Curr_velR1<0.01)
        replain=true;
 
    double v_pref = 0.5;
 
-   pure_pursuit(b1,1,caminho,l_ahead,v_pref);
+   pure_pursuit(b1,1,caminho,l_ahead,v_pref,ball);
 
     cinematica_azul();
 
@@ -709,7 +716,7 @@ pair<double, double> Strategy::gerarNovoPonto(pair<double, double> q_near, pair<
 
 bool Strategy::regraDeExclusao(pair<double, double> q_new, Team obs, int idx)
 {
-    double raioRobo = 0.05;
+    double raioRobo = 0.05; // poder ser o R ou 2*L
     int numObs = obs.size();
     bool resultado=true;
 
@@ -798,7 +805,36 @@ vector<pair<double, double>> Strategy::takeBallToGoal(pair<double, double> robot
 }
 
 
-void Strategy::pure_pursuit(fira_message::Robot robot, int id_robot,vector<pair<double,double>> points, double lookAhead_dist, double v_pref)
+double Strategy::turnToDestination(pair<double, double> robot_pos, pair<double, double> ball, pair<double, double> dest)
+{
+
+    //Comportamento simples com muito a ser aprimorado
+
+    double dist = sqrt(pow(ball.first-robot_pos.first,2)+pow(ball.second-robot_pos.second,2));
+    double err_goal;
+
+    if(dist<0.005)//0.003
+        double err_goal = atan2(ball.second-dest.second,ball.first-dest.first)*(180/M_PI);
+    else
+        double err_goal = 0.0;
+
+
+    pair<double, double> goal_p = make_pair(dest.first,dest.second);
+
+    //vector<pair<double, double>> path;
+    //path.push_back(goal_p);
+    //path.push_back(ball);
+    //path.push_back(make_pair(0.72,0));
+    cout << "Erro par o gol: " << err_goal <<endl;
+    return err_goal;
+
+    // talvez tenha influnêcia na movimentação lateral da bola em relação ao robô
+    // verificar efeito no replanejamento, pois pode requerer a associação de um novo comportamento independente da rrt
+
+}
+
+
+void Strategy::pure_pursuit(fira_message::Robot robot, int id_robot,vector<pair<double,double>> points, double lookAhead_dist, double v_pref, fira_message::Ball ball)
 {
     //Calcular distâncias do robô aos pontos no caminho
 
@@ -812,7 +848,10 @@ void Strategy::pure_pursuit(fira_message::Robot robot, int id_robot,vector<pair<
 
 
     ang_err angulo = olhar(robot, carrot_point.first, carrot_point.second);
-   // v_pref=v_pref*abs(cos(angulo.fi*M_PI/180));
+    ang_err angulo2 = olhar(robot, ball.x(), ball.y()); // olhar para a bola
+    double  dist = distancia(robot, 0.7*cos(atan2(ball.y()-robot.y(),ball.x()-robot.x())), 0.7*sin(atan2(ball.y()-robot.y(),ball.x()-robot.x())));
+    //ang_err angulo3 = atan2(ball.y()-robot.y(),ball.x()-robot.x());
+    // v_pref=v_pref*abs(cos(angulo.fi*M_PI/180));
    if((abs(angulo.fi) > 45)&&(abs(angulo.fi) < 135))
         v_pref=0;
 
@@ -829,17 +868,23 @@ void Strategy::pure_pursuit(fira_message::Robot robot, int id_robot,vector<pair<
 
     if( (dd < d_acc)&&(pivot_pp<treshold-1))
         pivot_pp=pivot_pp+1;
-    else if( sqrt(pow(robot.x()-points.back().first,2)+pow(robot.y()-points.back().second,2) )<=lookAhead_dist)
+
+    // REPLANEJAMENTO
+
+    //else if(() || (pivot_pp>=treshold-1))
+    else if(abs((abs(angulo2.fi) - abs(angulo.fi)) > 35 ) || (pivot_pp>=treshold-1))
+    //else if( sqrt(pow(robot.x()-points.back().first,2)+pow(robot.y()-points.back().second,2) )<=lookAhead_dist)
     //else if(pivot_pp>=treshold-1)
         replain=true;     // habilita replanejamento
+        //cout << "angulo para bola: "<< angulo2.fi<<endl;
 
    /* double err = sqrt(pow(robot.x()-carrot_point.first,2)+
                       pow(robot.y()-carrot_point.second,2))-lookAhead_dist;*/
-
+    double err_goal = turnToDestination(make_pair(robot.x(),robot.y()), make_pair(ball.x(),ball.x()),make_pair(0.76,0.0));
     //VW[id_robot][0] = controleLinear(err,3.65,0.01);
     VW[id_robot][0] = controleLinear(robot, carrot_point.first,carrot_point.second,lookAhead_dist);
     angulo = olhar(robot, carrot_point.first, carrot_point.second);
-    VW[id_robot][1] = controleAngular(angulo.fi);
+    VW[id_robot][1] = controleAngular(angulo.fi+(err_goal));
 
     //send_data_control(sqrt(pow(v_swp.first, 2)+pow(v_swp.second, 2)),sqrt(pow(robot.vx(), 2)+pow(robot.vy(), 2)));
 

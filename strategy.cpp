@@ -621,9 +621,10 @@ vector<pair<double, double>> Strategy::path_planningRRT(pair<double, double> roo
 
     }
     cout << "Numero de Iterações: " << i <<endl;
+    cout << "Tamanho do Caminho: " << rrt.size() <<endl;
 
     vector<vetor> path = gerarCaminho(rrt,adjList,idxProxGoal);
-    cout << "Tamanho do Caminho: " << path.size() <<endl;
+    cout << "Tamanho do Caminho2: " << path.size() <<endl;
     if(!path.size())
         path.push_back(root);
 
@@ -658,7 +659,31 @@ pair<double, double> Strategy::gerarPontoAleatotio(pair<double, double> currPos,
 pair<double, double> Strategy::gerarPontoAleatotio(pair<double, double> currPos, pair<double, double> goal, double prob, double raio)
 {
     double r= (static_cast <double> (rand())/(static_cast <double> (RAND_MAX/2*raio))) - raio;
-    double theta= (static_cast <double> (rand())/(static_cast <double> (RAND_MAX/(atan2(goal.first-currPos.first,goal.second-currPos.second)))));
+    //double theta= (static_cast <double> (rand())/(static_cast <double> (RAND_MAX/(M_PI)))) - M_PI/2;
+
+
+    double ang = (180/M_PI)*atan2(goal.first-currPos.first,goal.second-currPos.second);
+    double theta;
+    if(ang < -90)
+        {
+            theta= -(static_cast <double> (rand())/(static_cast <double> (RAND_MAX/(M_PI/2)))) - M_PI/2; 
+        }
+    else if(ang > -90 && ang < 0)
+        {
+           theta= -(static_cast <double> (rand())/(static_cast <double> (RAND_MAX/(M_PI/2))));
+        }
+    else if(ang>0 && ang<90)
+        {
+          theta= (static_cast <double> (rand())/(static_cast <double> (RAND_MAX/(M_PI/2))));
+        }
+    else if(ang>90 && ang<180)
+        {
+            theta= (static_cast <double> (rand())/(static_cast <double> (RAND_MAX/(M_PI/2)))) + M_PI/2;
+        }
+    else
+        {
+            theta= (static_cast <double> (rand())/(static_cast <double> (RAND_MAX/(M_PI)))) - M_PI/2;
+        }
 
     pair<double, double> q_rand;
     double x=currPos.first + r*cos(theta);
@@ -708,7 +733,7 @@ int Strategy::buscaPontoMaisProximo(vector<pair<double, double>> arvore, pair<do
 pair<double, double> Strategy::gerarNovoPonto(pair<double, double> q_near, pair<double, double> q_rand, double passo)
 {
     //Parâmetro de filtro
-    double k=0.8;
+    double k=0.85;
 
     double norm = distancia(q_rand.first,q_rand.second,q_near.first,q_near.second);
     double qnew_x = q_near.first + passo*(q_rand.first - q_near.first)/norm;
@@ -740,7 +765,7 @@ bool Strategy::regraDeExclusao(pair<double, double> q_new, Team obs, int idx)
             if(i!=idx)
             {
                 double dist=distancia(q_new.first,q_new.second,obs.at(i).x(),obs.at(i).y());
-                if(dist<(2.3*raioRobo))
+                if(dist<(2.35*raioRobo))
                     {
                         resultado=false;
                         break;
@@ -761,12 +786,15 @@ vector<pair<double, double> > Strategy::gerarCaminho(vector<pair<double, double>
         pivo = adjList.at(pivo);
     }
     vector<pair<double, double>> rpath;
+    rpath.clear();
     for(int i=path.size()-1;i>=0;i--)
         {
             rpath.push_back(path.at(i));
         }
 
-    rpath.pop_back();
+    if(rpath.size()>1)
+        rpath.pop_back();
+
     return rpath;
 }
 
@@ -882,13 +910,13 @@ void Strategy::takeBallToGoal(fira_message::Robot robot,int id_robot, pair<doubl
     double a = 0.7; //frequência de corte
     pair<double,double> currPos=make_pair(robot.x(),robot.y());
 
-    double raio=2*l_ahead;
-    double th = atan2(-ballPos.second,-0.72*lado-ballPos.first);
+    double raio=3*l_ahead;
+    double th = atan2(-ballPos.second,-0.72*lado - ballPos.first) - (abs(ballPos.second)/0.65)*(ballPos.second/abs(ballPos.second))*M_PI/2;
     pair<double, double> goalP = make_pair(ballPos.first-raio*cos(th),ballPos.second-raio*sin(th));
 
-    double v_pref = 0.35;
+    double v_pref = 0.5;
 
-    if(distancia(currPos.first,currPos.second,goalP.first,goalP.second)<raio+0.05)
+    if(distancia(currPos.first,currPos.second,goalP.first,goalP.second)<l_ahead+0.15)
     {
         if(flagTbT)
             {

@@ -73,6 +73,7 @@ class Strategy {
 
     Team *blue = NULL;
     Team *yellow = NULL;
+    Team robots;
 
     vector<ballPredPos> ballPredMemory; //Vetor de memória com posições passadas
     void predict_ball(fira_message::Ball ball);
@@ -121,7 +122,6 @@ class Strategy {
     void converte_vetor(double V[],double);
     double filtro(double V,int);
     void vaiPara_desviando(fira_message::Robot,double,double,int);
-    vector<double> inserirRRT(vector<double>,vector<double>,int);
     void goleiro_petersson(fira_message::Robot,fira_message::Ball,int);
     void goleiro_petersson2(fira_message::Robot,fira_message::Ball,int);
     void chute(int);
@@ -157,10 +157,10 @@ class Strategy {
     vector<double> memoria_amarelo_linear;
     vector<double> memoria_amarelo_angular;
 
-    ang_err olhar(fira_message::Robot, double, double);
+    ang_err olhar(fira_message::Robot, double, double); //<-- usamos essa
     double distancia(fira_message::Robot,double,double);
-    double distancia(double,double,double,double);
-    double limita_velocidade(double, double);
+    double distancia(double,double,double,double); //<-- usamos essa
+    double limita_velocidade(double, double); //<-- usamos essa
 
 //------------------ Edições 2021 ------------------------------------------------------------------------------------------------//
  //Métodos
@@ -176,12 +176,20 @@ class Strategy {
         vector<pair<double,double>> gerarCaminho(vector<pair<double,double>> arvore,vector<int> adjList, int idxGoal);
         bool straitlineTest(pair<double,double> currPos/* novo ponto */, pair<double,double> target, Team obs /* outros robôs */, int idx /* indice do robô */);
         void filtro_caminho(double frequencia);
+
+
+        //retorna um booleano "true" caso a bola "desvie muito" do caminho
+        bool dotCriterio(pair<double,double> currPos, pair<double,double> carrotP, pair<double,double> goalP);
+
         //------------------------------------
     //--------------------------------------------
 
     //----- Comportamentos
-    vector<pair<double,double>> takeBallToGoal(pair<double,double> robot_pos, pair<double,double> ball);
-
+        //ir para ponto
+    void vaiParaRRT(fira_message::Robot robot,int id_robot, pair<double,double> goalP);
+        //Tenatar levar a bola para o goal
+    void takeBallToGoal(fira_message::Robot robot,int id_robot, pair<double,double> ballPos);
+       bool flagTbT; //Flag
 
    //------ Path Tracking
     void pure_pursuit(fira_message::Robot robot,int id_robot,vector<pair<double,double>> points, double lookAhead_dist, double v_pref);

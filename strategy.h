@@ -177,8 +177,10 @@ class Strategy {
         bool straitlineTest(pair<double,double> currPos/* novo ponto */, pair<double,double> target, Team obs /* outros robôs */, int idx /* indice do robô */);
         void filtro_caminho(double frequencia);
 
+
         //retorna um booleano "true" caso a bola "desvie muito" do caminho
         bool dotCriterio(pair<double,double> currPos, pair<double,double> carrotP, pair<double,double> goalP);
+
         //------------------------------------
     //--------------------------------------------
 

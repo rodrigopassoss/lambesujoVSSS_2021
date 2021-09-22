@@ -175,14 +175,16 @@ void Strategy::strategy_blue(fira_message::Robot b0, fira_message::Robot b1,fira
    //Curr_vel = Velocidade atual do robô 1
    /*double Curr_velR1 = sqrt(pow(b1.vx(), 2)+pow(b1.vy(), 2));
 
+
    double l_ahead=0.07;   //Look-Ahead distance
 
    double raio_rrt=0.45;  //Raio da RRT
 
    double a = 0.85; //frequência de corte
+
    pair<double,double> goalP=make_pair(ball.x(),ball.y());
    pair<double,double> currPos=make_pair(b1.x(),b1.y());
-
+   vector<vetor> caminho_aux;
    if(replain)
        {
             start=clock();
@@ -216,7 +218,7 @@ void Strategy::strategy_blue(fira_message::Robot b0, fira_message::Robot b1,fira
    if((Curr_velR1<0.01)||(cri==true))
        replain=true;
 
-   double v_pref = 0.35;
+   double v_pref = 0.5;
 
    pure_pursuit(b1,1,caminho,l_ahead,v_pref);*/
    pair<double,double> goalP=make_pair(ball.x(),ball.y());

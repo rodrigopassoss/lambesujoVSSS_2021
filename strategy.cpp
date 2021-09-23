@@ -178,8 +178,8 @@ void Strategy::strategy_blue(fira_message::Robot b0, fira_message::Robot b1,fira
    double l_ahead=0.08;
    double raio_rrt=0.7;
    double a = 0.8; //frequência de corte
-   pair<double,double> goalP=make_pair(ball.x(),ball.y());
-   //pair<double,double> goalP=make_pair(predictedBall.x,predictedBall.y);  // Teste predictedBall
+   //pair<double,double> goalP=make_pair(ball.x(),ball.y());
+   pair<double,double> goalP=make_pair(predictedBall.x,predictedBall.y);  // Teste predictedBall
    pair<double,double> currPos=make_pair(b1.x(),b1.y());
    vector<vetor> caminho_aux;
    if(replain)
@@ -805,27 +805,24 @@ vector<pair<double, double>> Strategy::takeBallToGoal(pair<double, double> robot
 }
 
 
-double Strategy::turnToDestination(pair<double, double> robot_pos, pair<double, double> ball, pair<double, double> dest)
+ang_err Strategy::turnToDestination(fira_message::Robot robot, pair<double, double> ball, pair<double, double> dest)
 {
 
     //Comportamento simples com muito a ser aprimorado
 
-    double dist = sqrt(pow(ball.first-robot_pos.first,2)+pow(ball.second-robot_pos.second,2));
-    double err_goal;
+    double dist = sqrt(pow(ball.first-robot.x(),2)+pow(ball.second-robot.y(),2));
+    ang_err err_goal;
 
-    if(dist<0.005)//0.003
-        double err_goal = atan2(ball.second-dest.second,ball.first-dest.first)*(180/M_PI);
+    if(dist<=0.005)//0.003
+        //double err_goal = atan2(ball.second-dest.second,ball.first-dest.first)*(180/M_PI);
+        ang_err err_goal = olhar(robot,dest.first,dest.second);
     else
-        double err_goal = 0.0;
+        ang_err err_goal = olhar(robot,robot.x(),robot.y());
 
 
     pair<double, double> goal_p = make_pair(dest.first,dest.second);
 
-    //vector<pair<double, double>> path;
-    //path.push_back(goal_p);
-    //path.push_back(ball);
-    //path.push_back(make_pair(0.72,0));
-    cout << "Erro par o gol: " << err_goal <<endl;
+    cout << "Erro par o gol: " << err_goal.fi <<endl;
     return err_goal;
 
     // talvez tenha influnêcia na movimentação lateral da bola em relação ao robô
@@ -880,11 +877,11 @@ void Strategy::pure_pursuit(fira_message::Robot robot, int id_robot,vector<pair<
 
    /* double err = sqrt(pow(robot.x()-carrot_point.first,2)+
                       pow(robot.y()-carrot_point.second,2))-lookAhead_dist;*/
-    double err_goal = turnToDestination(make_pair(robot.x(),robot.y()), make_pair(ball.x(),ball.x()),make_pair(0.76,0.0));
+    ang_err err_goal = turnToDestination(robot,make_pair(ball.x(),ball.x()),make_pair(0.76,0.0));
     //VW[id_robot][0] = controleLinear(err,3.65,0.01);
     VW[id_robot][0] = controleLinear(robot, carrot_point.first,carrot_point.second,lookAhead_dist);
     angulo = olhar(robot, carrot_point.first, carrot_point.second);
-    VW[id_robot][1] = controleAngular(angulo.fi+(err_goal));
+    VW[id_robot][1] = controleAngular(angulo.fi+(1*err_goal.fi));
 
     //send_data_control(sqrt(pow(v_swp.first, 2)+pow(v_swp.second, 2)),sqrt(pow(robot.vx(), 2)+pow(robot.vy(), 2)));
 

@@ -817,7 +817,9 @@ ang_err Strategy::turnToDestination(fira_message::Robot robot, pair<double, doub
         //double err_goal = atan2(ball.second-dest.second,ball.first-dest.first)*(180/M_PI);
         ang_err err_goal = olhar(robot,dest.first,dest.second);
     else
-        ang_err err_goal = olhar(robot,robot.x(),robot.y());
+        //ang_err err_goal = olhar(robot,robot.x(),robot.y()); // Zero
+        err_goal.fi = 0.0;
+        err_goal.flag = 0;
 
 
     pair<double, double> goal_p = make_pair(dest.first,dest.second);

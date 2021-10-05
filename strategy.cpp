@@ -47,10 +47,11 @@ Strategy::Strategy(bool time)
 
     //verifica se foi criado um time amarelo
     if(time == true){
-        lado = -1;
-    }else{//ou time azul
         lado = 1;
+    }else{//ou time azul
+        lado = -1;
     }
+    cout << "lado: " << lado << endl;
 
     replain = true; //Modo planejar
     plain = false;
@@ -120,7 +121,7 @@ void Strategy::strategy_blue(fira_message::Robot b0, fira_message::Robot b1,fira
                              fira_message::Ball ball, const fira_message::Field & field,string sit_juiz)
 {
    robots = Team(b0,b1,b2,y0,y1,y2);
-  /* double dist1, dist2;
+  double dist1, dist2;
     cout << endl;
    if (ball.x()<0.65)
     {
@@ -133,23 +134,23 @@ void Strategy::strategy_blue(fira_message::Robot b0, fira_message::Robot b1,fira
         dist2 = sqrt(pow(b2.x()-ball.x(),2)+4*pow(b2.y()-ball.y(),2));
     }
 
-    f(sit_juiz == "GAME_ON"){
+    if(1){
          goleiro_petersson2(b0,ball,0);
-         atacante_todos(blue,yellow,ball,2,1);
+         atacante_todos(robots,Team(y0,y1,y2),ball,2,1);
 
          if((ball.x() > -0.1)&&((dist1>0.15)||(dist2>0.15))){
              if (dist1 > dist2){
                  cout<<"config 1"<<endl;
                  zagueiro2(b1,ball,1);
-                 atacante_todos(blue,yellow,ball,2,1);
+                 atacante_todos(robots,Team(y0,y1,y2),ball,2,1);
              }else{
-                 cout<<"config 2"<<endl;
+                 //cout<<"config 2"<<endl;
                  zagueiro2(b2,ball,2);
-                 atacante_todos(blue,yellow,ball,1,2);
+                 atacante_todos(robots,Team(y0,y1,y2),ball,1,2);
              }
          }else{
              zagueiro2(b1,ball,1);
-             atacante_todos(blue,yellow,ball,2,1);
+             atacante_todos(robots,Team(y0,y1,y2),ball,2,1);
          }
 
 
@@ -158,7 +159,7 @@ void Strategy::strategy_blue(fira_message::Robot b0, fira_message::Robot b1,fira
         andarFrente(0,1);
         andarFrente(0,2);
 
-    }*/
+    }
 
     //goleiro_petersson2(b0,ball,0);
     //atacante_todos(blue,yellow,ball,2,1);
@@ -221,9 +222,9 @@ void Strategy::strategy_blue(fira_message::Robot b0, fira_message::Robot b1,fira
    double v_pref = 0.5;
 
    pure_pursuit(b1,1,caminho,l_ahead,v_pref);*/
-   pair<double,double> goalP=make_pair(ball.x(),ball.y());
+   //pair<double,double> goalP=make_pair(ball.x(),ball.y());
    //vaiParaRRT(b1,1,goalP);
-   takeBallToGoal(b1,1,goalP);
+   //takeBallToGoal(b1,1,goalP);
 
 
    //vaiPara(b0,ball.x()-0.1,ball.y()-0.1,0);
@@ -916,9 +917,9 @@ void Strategy::takeBallToGoal(fira_message::Robot robot,int id_robot, pair<doubl
     double th = atan2(-ballPos.second,-0.72*lado - ballPos.first) - (abs(ballPos.second)/0.65)*(ballPos.second/abs(ballPos.second))*M_PI/2;
     pair<double, double> goalP = make_pair(ballPos.first-raio*cos(th),ballPos.second-raio*sin(th));
 
-    double v_pref = 0.5;
+    double v_pref = 0.4;
 
-    if(distancia(currPos.first,currPos.second,goalP.first,goalP.second)<l_ahead+0.15)
+    if(distancia(currPos.first,currPos.second,goalP.first,goalP.second)<l_ahead)
     {
         if(flagTbT)
             {
@@ -1721,10 +1722,13 @@ void Strategy::atacante_todos(Team rb,Team adversario, fira_message::Ball ball, 
                     double attachX = ball.x() - (0.8*dist_target)*sin(atan2(ball.x() - adversario[target].x(),ball.y() - adversario[target].y()));
                     double attachY = ball.y() - (0.8*dist_target)*cos(atan2(ball.x() - adversario[target].x(),ball.y() - adversario[target].y()));
 
-                    vaiPara_desviando(rb[id],attachX,attachY,id);
+                     vaiParaRRT(rb[id],id,make_pair(attachX,attachY));
+
                 }
                 else
-                    vaiPara_desviando(rb[id],0.10,(*resultante_2)[1]-0.1,id);
+                {
+                     vaiParaRRT(rb[id],id,make_pair(0.10,(*resultante_2)[1]-0.1));
+                }
 
             }else
             {
@@ -1740,9 +1744,13 @@ void Strategy::atacante_todos(Team rb,Team adversario, fira_message::Ball ball, 
                     c = 1;
 
                 if(zag_dist/dist < 0.3)
-                    vaiPara_desviando(rb[id],attachX-0.1,c*0.25,id);
+                {
+                     vaiParaRRT(rb[id],id,make_pair(attachX-0.1,c*0.25));
+                }
                 else
-                    vaiPara_desviando(rb[id],(*resultante_2)[0],(*resultante_2)[1],id);
+                {
+                     vaiParaRRT(rb[id],id,make_pair((*resultante_2)[0],(*resultante_2)[1]));
+                }
 
                 /*double distToGoal = sqrt(pow(rb[id].x()-meioGolx,2.0)+pow(rb[id].y()-0,2.0));
                 if(distToGoal < 0.5 && ball.x()>rb[id].x() && (ball.y() < 0.20 && ball.y()>-0.20) )
